@@ -27,7 +27,7 @@ const iguagileAPIVersion = "v1"
 
 func main() {
 	e := echo.New()
-	g := e.Group("/api/v1/")
+	g := e.Group("/api/v1")
 	g.Add(echo.POST, "/create", roomCreateHandler)
 	g.Add(echo.GET, "/search", roomListHandler)
 	g.Use(func(next echo.HandlerFunc) echo.HandlerFunc {

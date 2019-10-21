@@ -68,8 +68,7 @@ func roomListHandler(c echo.Context) error {
 	})
 	res := APIResponse{
 		Success: true,
-
-		Result: rooms,
+		Result:  rooms,
 	}
 
 	return c.JSON(200, res)

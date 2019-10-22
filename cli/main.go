@@ -1,7 +1,15 @@
 package main
 
 import (
+	"encoding/json"
+	"io/ioutil"
+	"log"
+	"math"
+	"sync"
+
 	"github.com/labstack/echo"
+	"github.com/labstack/echo/middleware"
+	"github.com/minami14/idgo"
 )
 
 type Server struct {
@@ -15,6 +23,8 @@ type Room struct {
 	MaxUser         int    `json:"max_user"`
 	ConnectedUser   int    `json:"connected_user"`
 	Server          Server `json:"server"`
+	ApplicationName string
+	Version         string
 }
 
 type APIResponse struct {
@@ -23,10 +33,62 @@ type APIResponse struct {
 	Error   string      `json:"error"`
 }
 
+type CreateRoomRequest struct {
+	ApplicationName string `json:"application_name"`
+	Version         string `json:"version"`
+	Password        string `json:"password"`
+	MaxUser         int    `json:"max_user"`
+}
+
+type RoomManager struct {
+	Rooms map[int]*Room
+	sync.Mutex
+}
+
+func (m *RoomManager) AddRoom(room *Room) {
+	m.Lock()
+	defer m.Unlock()
+	m.Rooms[room.RoomID] = room
+}
+
+func (m *RoomManager) Search(name, version string) []*Room {
+	rooms := make([]*Room, 0)
+	m.Lock()
+	defer m.Unlock()
+	for _, room := range m.Rooms {
+		if room.ApplicationName == name && room.Version == version {
+			rooms = append(rooms, room)
+		}
+	}
+
+	return rooms
+}
+
+var roomManager = &RoomManager{
+	Rooms: make(map[int]*Room),
+	Mutex: sync.Mutex{},
+}
+
+var generator *idgo.IDGenerator
+
 const iguagileAPIVersion = "v1"
 
+const maxUser = 70
+
 func main() {
+	store, err := idgo.NewLocalStore(math.MaxInt16)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	generator, err = idgo.NewIDGenerator(store)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	e := echo.New()
+	e.Use(middleware.Recover())
+	e.Use(middleware.Logger())
 	g := e.Group("/api/v1")
 	g.Add(echo.POST, "/create", roomCreateHandler)
 	g.Add(echo.GET, "/search", roomListHandler)
@@ -40,32 +102,57 @@ func main() {
 }
 
 func roomCreateHandler(c echo.Context) error {
+	body, err := ioutil.ReadAll(c.Request().Body)
+	if err != nil {
+		return err
+	}
+
+	var request CreateRoomRequest
+	if err := json.Unmarshal(body, &request); err != nil {
+		return err
+	}
+	log.Printf("create %v\n", request)
+
+	if request.MaxUser > maxUser {
+		res := APIResponse{
+			Success: false,
+			Error:   "MaxUser exceeds the maximum value",
+		}
+		return c.JSON(400, res)
+	}
+
+	id, err := generator.Generate()
+	if err != nil {
+		return err
+	}
+
+	room := &Room{
+		RoomID:          id,
+		MaxUser:         request.MaxUser,
+		RequirePassword: request.Password != "",
+		Server: Server{
+			Host: "localhost",
+			Port: 4000,
+		},
+		ApplicationName: request.ApplicationName,
+		Version:         request.Version,
+	}
+
+	roomManager.AddRoom(room)
+
 	res := APIResponse{
 		Success: true,
-		Result: Room{
-			RoomID:  1,
-			MaxUser: 10,
-			Server: Server{
-				Host: "localhost",
-				Port: 4000,
-			},
-		},
+		Result:  room,
 	}
 	return c.JSON(201, res)
 }
 
 func roomListHandler(c echo.Context) error {
-	var rooms []Room
-	rooms = append(rooms, Room{
-		RoomID:          1,
-		RequirePassword: false,
-		Server: Server{
-			Host: "localhost",
-			Port: 4000,
-		},
-		MaxUser:       10,
-		ConnectedUser: 1,
-	})
+	name := c.QueryParam("name")
+	version := c.QueryParam("version")
+	log.Printf("search %s %s\n", name, version)
+
+	rooms := roomManager.Search(name, version)
 	res := APIResponse{
 		Success: true,
 		Result:  rooms,

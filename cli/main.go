@@ -41,32 +41,28 @@ type CreateRoomRequest struct {
 }
 
 type RoomManager struct {
-	Rooms map[int]*Room
-	sync.Mutex
+	rooms *sync.Map
 }
 
-func (m *RoomManager) AddRoom(room *Room) {
-	m.Lock()
-	defer m.Unlock()
-	m.Rooms[room.RoomID] = room
+func (m *RoomManager) Store(room *Room) {
+	m.rooms.Store(room.RoomID, room)
 }
 
 func (m *RoomManager) Search(name, version string) []*Room {
 	rooms := make([]*Room, 0)
-	m.Lock()
-	defer m.Unlock()
-	for _, room := range m.Rooms {
+	m.rooms.Range(func(key, value interface{}) bool {
+		room := value.(*Room)
 		if room.ApplicationName == name && room.Version == version {
 			rooms = append(rooms, room)
 		}
-	}
+		return true
+	})
 
 	return rooms
 }
 
 var roomManager = &RoomManager{
-	Rooms: make(map[int]*Room),
-	Mutex: sync.Mutex{},
+	rooms: &sync.Map{},
 }
 
 var generator *idgo.IDGenerator
@@ -138,7 +134,7 @@ func roomCreateHandler(c echo.Context) error {
 		Version:         request.Version,
 	}
 
-	roomManager.AddRoom(room)
+	roomManager.Store(room)
 
 	res := APIResponse{
 		Success: true,

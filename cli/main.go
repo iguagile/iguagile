@@ -1,8 +1,6 @@
 package main
 
 import (
-	"encoding/json"
-	"io/ioutil"
 	"log"
 	"math"
 	"sync"
@@ -98,13 +96,8 @@ func main() {
 }
 
 func roomCreateHandler(c echo.Context) error {
-	body, err := ioutil.ReadAll(c.Request().Body)
-	if err != nil {
-		return err
-	}
-
-	var request CreateRoomRequest
-	if err := json.Unmarshal(body, &request); err != nil {
+	request := &CreateRoomRequest{}
+	if err := c.Bind(request); err != nil {
 		return err
 	}
 	log.Printf("create %v\n", request)

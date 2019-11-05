@@ -26,4 +26,5 @@ message Room {
 message Server {
     string host = 1;
     int32 port = 2;
+    int32 server_id = 3;
 }

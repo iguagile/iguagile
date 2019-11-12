@@ -84,8 +84,8 @@ func main() {
 	e.Use(middleware.Recover())
 	e.Use(middleware.Logger())
 	g := e.Group("/api/v1")
-	g.Add(echo.POST, "/create", roomCreateHandler)
-	g.Add(echo.GET, "/search", roomListHandler)
+	g.Add(echo.POST, "/rooms", roomCreateHandler)
+	g.Add(echo.GET, "/rooms", roomListHandler)
 	g.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			c.Response().Header().Add("X-IGUAGILE-API", iguagileAPIVersion)

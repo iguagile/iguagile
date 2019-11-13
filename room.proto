@@ -22,6 +22,8 @@ message Room {
     int32 max_user = 3;
     int32 connected_user = 4;
     Server server = 5;
+    string application_name = 6;
+    string version = 7;
 }
 
 message Server {

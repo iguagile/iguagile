@@ -2,17 +2,21 @@ package main
 
 import (
 	"log"
-	"math"
+	"os"
 	"sync"
 
+	"github.com/golang/protobuf/proto"
+	"github.com/gomodule/redigo/redis"
+	pb "github.com/iguagile/iguagile-room-proto/room"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"github.com/minami14/idgo"
 )
 
 type Server struct {
-	Host string `json:"server"`
-	Port int    `json:"port"`
+	Host     string `json:"server"`
+	Port     int    `json:"port"`
+	ServerID int
 }
 
 type Room struct {
@@ -38,12 +42,81 @@ type CreateRoomRequest struct {
 	MaxUser         int    `json:"max_user"`
 }
 
+type ServerManager struct {
+	servers *sync.Map
+}
+
+func (m *ServerManager) Store(server *Server) {
+	m.servers.Store(server.ServerID, server)
+}
+
+func (m *ServerManager) Delete(serverID int) {
+	m.servers.Delete(serverID)
+}
+
+func (m *ServerManager) LoadServers() []*Server {
+	var servers []*Server
+	m.servers.Range(func(key, value interface{}) bool {
+		switch server := value.(type) {
+		case *Server:
+			servers = append(servers, server)
+		}
+		return true
+	})
+
+	return servers
+}
+
 type RoomManager struct {
 	rooms *sync.Map
 }
 
+func (m *RoomManager) LoadRooms(applicationName, version string) []*pb.Room {
+	rooms, ok := m.rooms.Load(applicationName + version)
+	if !ok {
+		return []*pb.Room{}
+	}
+
+	switch v := rooms.(type) {
+	case *sync.Map:
+		var rooms []*pb.Room
+		v.Range(func(key, value interface{}) bool {
+			switch v := value.(type) {
+			case *pb.Room:
+				rooms = append(rooms, v)
+			}
+			return true
+		})
+		return rooms
+	default:
+		return []*pb.Room{}
+	}
+}
+
 func (m *RoomManager) Store(room *Room) {
 	m.rooms.Store(room.RoomID, room)
+	key := room.ApplicationName + room.Version
+	rooms, ok := m.rooms.Load(key)
+	if !ok {
+		rooms := &sync.Map{}
+		rooms.Store(room.RoomID, room)
+		m.rooms.Store(key, rooms)
+	} else {
+		switch v := rooms.(type) {
+		case *sync.Map:
+			v.Store(room.RoomID, room)
+		}
+	}
+}
+
+func (m *RoomManager) Delete(roomID int) {
+	m.rooms.Range(func(key, value interface{}) bool {
+		switch rooms := value.(type) {
+		case *sync.Map:
+			rooms.Delete(roomID)
+		}
+		return true
+	})
 }
 
 func (m *RoomManager) Search(name, version string) []*Room {
@@ -69,16 +142,128 @@ const iguagileAPIVersion = "v1"
 
 const maxUser = 70
 
+const (
+	channelServer = "channel_servers"
+	channelRoom   = "channel_rooms"
+)
+
+const (
+	registerServerMessage = iota
+	unregisterServerMessage
+	registerRoomMessage
+	unregisterRoomMessage
+	updateRoomMessage
+)
+
 func main() {
-	store, err := idgo.NewLocalStore(math.MaxInt16)
+	redisConn, err := redis.Dial("tcp", os.Getenv("REDIS_HOST"))
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	generator, err = idgo.NewIDGenerator(store)
-	if err != nil {
+	psc := redis.PubSubConn{Conn: redisConn}
+	if err := psc.Subscribe(channelServer, channelRoom); err != nil {
 		log.Fatal(err)
 	}
+
+	serverManager := &ServerManager{servers: &sync.Map{}}
+	roomManager := &RoomManager{rooms: &sync.Map{}}
+
+	go func() {
+		switch v := psc.Receive().(type) {
+		case redis.Message:
+			if len(v.Data) <= 1 {
+				log.Printf("invalid message %v\n", v)
+				break
+			}
+			switch v.Channel {
+			case channelRoom:
+				switch v.Data[0] {
+				case registerRoomMessage:
+					roomProto := &pb.Room{}
+					if err := proto.Unmarshal(v.Data[1:], roomProto); err != nil {
+						log.Println(err)
+						break
+					}
+
+					roomManager.Store(&Room{
+						RoomID:          int(roomProto.RoomId),
+						RequirePassword: roomProto.RequirePassword,
+						MaxUser:         int(roomProto.MaxUser),
+						ConnectedUser:   int(roomProto.ConnectedUser),
+						Server: Server{
+							Host:     roomProto.Server.Host,
+							Port:     int(roomProto.Server.Port),
+							ServerID: int(roomProto.Server.ServerId),
+						},
+						ApplicationName: roomProto.ApplicationName,
+						Version:         roomProto.Version,
+					})
+				case updateRoomMessage:
+					roomProto := &pb.Room{}
+					if err := proto.Unmarshal(v.Data[1:], roomProto); err != nil {
+						log.Println(err)
+						break
+					}
+
+					roomManager.Store(&Room{
+						RoomID:          int(roomProto.RoomId),
+						RequirePassword: roomProto.RequirePassword,
+						MaxUser:         int(roomProto.MaxUser),
+						ConnectedUser:   int(roomProto.ConnectedUser),
+						Server: Server{
+							Host:     roomProto.Server.Host,
+							Port:     int(roomProto.Server.Port),
+							ServerID: int(roomProto.Server.ServerId),
+						},
+						ApplicationName: roomProto.ApplicationName,
+						Version:         roomProto.Version,
+					})
+				case unregisterRoomMessage:
+					roomProto := &pb.Room{}
+					if err := proto.Unmarshal(v.Data[1:], roomProto); err != nil {
+						log.Println(err)
+						break
+					}
+
+					roomManager.Delete(int(roomProto.RoomId))
+				default:
+					log.Printf("invalid message type %v\n", v)
+				}
+			case channelServer:
+				switch v.Data[0] {
+				case registerServerMessage:
+					serverProto := &pb.Server{}
+					if err := proto.Unmarshal(v.Data[1:], serverProto); err != nil {
+						log.Println(err)
+						break
+					}
+
+					serverManager.Store(&Server{
+						Host:     serverProto.Host,
+						Port:     int(serverProto.Port),
+						ServerID: int(serverProto.ServerId),
+					})
+				case unregisterServerMessage:
+					serverProto := &pb.Server{}
+					if err := proto.Unmarshal(v.Data[1:], serverProto); err != nil {
+						log.Println(err)
+						break
+					}
+
+					serverManager.Delete(int(serverProto.ServerId))
+				default:
+					log.Printf("invalid message type %v\n", v)
+				}
+			default:
+				log.Printf("invalid channel%v\n", v)
+			}
+		case redis.Subscription:
+			log.Printf("Subscribe %v %v %v\n", v.Channel, v.Kind, v.Count)
+		case error:
+			log.Println(err)
+		}
+	}()
 
 	e := echo.New()
 	e.Use(middleware.Recover())
@@ -100,7 +285,6 @@ func roomCreateHandler(c echo.Context) error {
 	if err := c.Bind(request); err != nil {
 		return err
 	}
-	log.Printf("create %v\n", request)
 
 	if request.MaxUser > maxUser {
 		res := APIResponse{

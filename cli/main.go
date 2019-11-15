@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+	"fmt"
 	"log"
 	"os"
 	"sync"
@@ -10,13 +12,15 @@ import (
 	pb "github.com/iguagile/iguagile-room-proto/room"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
-	"github.com/minami14/idgo"
+	"google.golang.org/grpc"
 )
 
 type Server struct {
 	Host     string `json:"server"`
 	Port     int    `json:"port"`
 	ServerID int
+	Load     int
+	APIPort  int
 }
 
 type Room struct {
@@ -52,6 +56,36 @@ func (m *ServerManager) Store(server *Server) {
 
 func (m *ServerManager) Delete(serverID int) {
 	m.servers.Delete(serverID)
+}
+
+func (m *ServerManager) LoadServer(serverID int) *Server {
+	var server *Server
+	m.servers.Range(func(key, value interface{}) bool {
+		switch s := value.(type) {
+		case *Server:
+			if s.ServerID == serverID {
+				server = s
+			}
+		}
+		return true
+	})
+
+	return server
+}
+
+func (m *ServerManager) LowLoadServer() *Server {
+	var server *Server
+	m.servers.Range(func(key, value interface{}) bool {
+		switch s := value.(type) {
+		case *Server:
+			if server == nil || server.Load > s.Load {
+				server = s
+			}
+		}
+		return true
+	})
+
+	return server
 }
 
 func (m *ServerManager) LoadServers() []*Server {
@@ -109,6 +143,28 @@ func (m *RoomManager) Store(room *Room) {
 	}
 }
 
+func (m *RoomManager) LoadRoom(roomID int) *Room {
+	var room *Room
+	m.rooms.Range(func(key, value interface{}) bool {
+		switch rooms := value.(type) {
+		case *sync.Map:
+			r, ok := rooms.Load(roomID)
+			if !ok {
+				return true
+			}
+			switch v := r.(type) {
+			case *Room:
+				room = v
+			}
+			return false
+		}
+
+		return true
+	})
+
+	return room
+}
+
 func (m *RoomManager) Delete(roomID int) {
 	m.rooms.Range(func(key, value interface{}) bool {
 		switch rooms := value.(type) {
@@ -132,12 +188,6 @@ func (m *RoomManager) Search(name, version string) []*Room {
 	return rooms
 }
 
-var roomManager = &RoomManager{
-	rooms: &sync.Map{},
-}
-
-var generator *idgo.IDGenerator
-
 const iguagileAPIVersion = "v1"
 
 const maxUser = 70
@@ -155,6 +205,11 @@ const (
 	updateRoomMessage
 )
 
+var (
+	serverManager = &ServerManager{servers: &sync.Map{}}
+	roomManager   = &RoomManager{rooms: &sync.Map{}}
+)
+
 func main() {
 	redisConn, err := redis.Dial("tcp", os.Getenv("REDIS_HOST"))
 	if err != nil {
@@ -165,9 +220,6 @@ func main() {
 	if err := psc.Subscribe(channelServer, channelRoom); err != nil {
 		log.Fatal(err)
 	}
-
-	serverManager := &ServerManager{servers: &sync.Map{}}
-	roomManager := &RoomManager{rooms: &sync.Map{}}
 
 	go func() {
 		switch v := psc.Receive().(type) {
@@ -219,11 +271,21 @@ func main() {
 						ApplicationName: roomProto.ApplicationName,
 						Version:         roomProto.Version,
 					})
+
+					if server := serverManager.LoadServer(int(roomProto.Server.ServerId)); server != nil {
+						if room := roomManager.LoadRoom(int(roomProto.RoomId)); room != nil {
+							server.Load += int(roomProto.ConnectedUser*roomProto.ConnectedUser) - room.ConnectedUser*room.ConnectedUser
+						}
+					}
 				case unregisterRoomMessage:
 					roomProto := &pb.Room{}
 					if err := proto.Unmarshal(v.Data[1:], roomProto); err != nil {
 						log.Println(err)
 						break
+					}
+
+					if server := serverManager.LoadServer(int(roomProto.Server.ServerId)); server != nil {
+						server.Load -= int(roomProto.ConnectedUser * roomProto.ConnectedUser)
 					}
 
 					roomManager.Delete(int(roomProto.RoomId))
@@ -294,18 +356,36 @@ func roomCreateHandler(c echo.Context) error {
 		return c.JSON(400, res)
 	}
 
-	id, err := generator.Generate()
+	server := serverManager.LowLoadServer()
+	if server == nil {
+		return fmt.Errorf("server not exists")
+	}
+
+	grpcHost := fmt.Sprintf("%v:%v", server.Host, server.APIPort)
+	grpcConn, err := grpc.Dial(grpcHost, grpc.WithInsecure())
+	if err != nil {
+		return err
+	}
+	defer func() { _ = grpcConn.Close() }()
+	grpcClient := pb.NewRoomServiceClient(grpcConn)
+	grpcRequest := &pb.CreateRoomRequest{
+		ApplicationName: request.ApplicationName,
+		Version:         request.Version,
+		Password:        request.Password,
+		MaxUser:         int32(request.MaxUser),
+	}
+	grpcResponse, err := grpcClient.CreateRoom(context.Background(), grpcRequest)
 	if err != nil {
 		return err
 	}
 
 	room := &Room{
-		RoomID:          id,
-		MaxUser:         request.MaxUser,
-		RequirePassword: request.Password != "",
+		RoomID:          int(grpcResponse.Room.RoomId),
+		MaxUser:         int(grpcResponse.Room.MaxUser),
+		RequirePassword: grpcResponse.Room.RequirePassword,
 		Server: Server{
-			Host: "localhost",
-			Port: 4000,
+			Host: server.Host,
+			Port: server.Port,
 		},
 		ApplicationName: request.ApplicationName,
 		Version:         request.Version,
@@ -323,7 +403,6 @@ func roomCreateHandler(c echo.Context) error {
 func roomListHandler(c echo.Context) error {
 	name := c.QueryParam("name")
 	version := c.QueryParam("version")
-	log.Printf("search %s %s\n", name, version)
 
 	rooms := roomManager.Search(name, version)
 	res := APIResponse{

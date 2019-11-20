@@ -21,6 +21,7 @@ type Server struct {
 	ServerID int
 	Load     int
 	APIPort  int
+	Token    []byte
 }
 
 type Room struct {

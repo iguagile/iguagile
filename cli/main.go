@@ -3,11 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/golang/protobuf/proto"
 	"log"
 	"os"
 	"sync"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/gomodule/redigo/redis"
 	pb "github.com/iguagile/iguagile-room-proto/room"
 	"github.com/labstack/echo"
@@ -221,7 +221,25 @@ func main() {
 		log.Fatal(err)
 	}
 
-	go func() {
+	go subscribe(psc)
+
+	e := echo.New()
+	e.Use(middleware.Recover())
+	e.Use(middleware.Logger())
+	g := e.Group("/api/v1")
+	g.Add(echo.POST, "/rooms", roomCreateHandler)
+	g.Add(echo.GET, "/rooms", roomListHandler)
+	g.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			c.Response().Header().Add("X-IGUAGILE-API", iguagileAPIVersion)
+			return next(c)
+		}
+	})
+	e.Logger.Fatal(e.Start("localhost:1323"))
+}
+
+func subscribe(psc redis.PubSubConn) {
+	for {
 		switch v := psc.Receive().(type) {
 		case redis.Message:
 			if len(v.Data) <= 1 {
@@ -323,23 +341,9 @@ func main() {
 		case redis.Subscription:
 			log.Printf("Subscribe %v %v %v\n", v.Channel, v.Kind, v.Count)
 		case error:
-			log.Println(err)
+			log.Println(v)
 		}
-	}()
-
-	e := echo.New()
-	e.Use(middleware.Recover())
-	e.Use(middleware.Logger())
-	g := e.Group("/api/v1")
-	g.Add(echo.POST, "/rooms", roomCreateHandler)
-	g.Add(echo.GET, "/rooms", roomListHandler)
-	g.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
-			c.Response().Header().Add("X-IGUAGILE-API", iguagileAPIVersion)
-			return next(c)
-		}
-	})
-	e.Logger.Fatal(e.Start("localhost:1323"))
+	}
 }
 
 func roomCreateHandler(c echo.Context) error {

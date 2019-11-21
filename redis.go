@@ -1,8 +1,6 @@
 package api
 
 import (
-	"log"
-
 	"github.com/golang/protobuf/proto"
 	"github.com/gomodule/redigo/redis"
 	pb "github.com/iguagile/iguagile-room-proto/room"
@@ -25,85 +23,87 @@ func subscribe(psc redis.PubSubConn) {
 		switch v := psc.Receive().(type) {
 		case redis.Message:
 			if len(v.Data) <= 1 {
-				log.Printf("invalid message %v\n", v)
+				Logger.Printf("invalid message %v\n", v)
 				break
 			}
 			switch v.Channel {
 			case channelRoom:
+				room := &pb.Room{}
+				if err := proto.Unmarshal(v.Data[1:], room); err != nil {
+					Logger.Println(err)
+					break
+				}
 				switch v.Data[0] {
 				case registerRoomMessage:
-					roomProto := &pb.Room{}
-					if err := proto.Unmarshal(v.Data[1:], roomProto); err != nil {
-						log.Println(err)
-						break
-					}
-
-					roomManager.Store(&Room{
-						RoomID:          int(roomProto.RoomId),
-						RequirePassword: roomProto.RequirePassword,
-						MaxUser:         int(roomProto.MaxUser),
-						ConnectedUser:   int(roomProto.ConnectedUser),
-						Server: Server{
-							Host:     roomProto.Server.Host,
-							Port:     int(roomProto.Server.Port),
-							ServerID: int(roomProto.Server.ServerId),
-						},
-						ApplicationName: roomProto.ApplicationName,
-						Version:         roomProto.Version,
-					})
-
-					if server := serverManager.LoadServer(int(roomProto.Server.ServerId)); server != nil {
-						if room := roomManager.LoadRoom(int(roomProto.RoomId)); room != nil {
-							server.Load += int(roomProto.ConnectedUser*roomProto.ConnectedUser) - room.MaxUser*room.MaxUser
-						}
-					}
+					registerRoom(room)
 				case unregisterRoomMessage:
-					roomProto := &pb.Room{}
-					if err := proto.Unmarshal(v.Data[1:], roomProto); err != nil {
-						log.Println(err)
-						break
-					}
-
-					if server := serverManager.LoadServer(int(roomProto.Server.ServerId)); server != nil {
-						server.Load -= int(roomProto.ConnectedUser * roomProto.ConnectedUser)
-					}
-
-					roomManager.Delete(int(roomProto.RoomId))
+					unregisterRoom(room)
 				default:
-					log.Printf("invalid message type %v\n", v)
+					Logger.Printf("invalid message type %v\n", v)
 				}
 			case channelServer:
+				server := &pb.Server{}
+				if err := proto.Unmarshal(v.Data[1:], server); err != nil {
+					Logger.Println(err)
+					break
+				}
 				switch v.Data[0] {
 				case registerServerMessage:
-					serverProto := &pb.Server{}
-					if err := proto.Unmarshal(v.Data[1:], serverProto); err != nil {
-						log.Println(err)
-						break
-					}
-
-					serverManager.Store(&Server{
-						Host:     serverProto.Host,
-						Port:     int(serverProto.Port),
-						ServerID: int(serverProto.ServerId),
-					})
+					registerServer(server)
 				case unregisterServerMessage:
-					serverProto := &pb.Server{}
-					if err := proto.Unmarshal(v.Data[1:], serverProto); err != nil {
-						log.Println(err)
-						break
-					}
-
-					serverManager.Delete(int(serverProto.ServerId))
+					unregisterServer(server)
 				default:
-					log.Printf("invalid message type %v\n", v)
+					Logger.Printf("invalid message type %v\n", v)
 				}
 			default:
-				log.Printf("invalid channel%v\n", v)
+				Logger.Printf("invalid channel%v\n", v)
 			}
 		case redis.Subscription:
-			log.Printf("Subscribe %v %v %v\n", v.Channel, v.Kind, v.Count)
+			Logger.Printf("Subscribe %v %v %v\n", v.Channel, v.Kind, v.Count)
 		case error:
-			log.Println(v)
+			Logger.Println(v)
 		}
 	}
+}
+
+func registerRoom(room *pb.Room) {
+	roomManager.Store(&Room{
+		RoomID:          int(room.RoomId),
+		RequirePassword: room.RequirePassword,
+		MaxUser:         int(room.MaxUser),
+		ConnectedUser:   int(room.ConnectedUser),
+		Server: Server{
+			Host:     room.Server.Host,
+			Port:     int(room.Server.Port),
+			ServerID: int(room.Server.ServerId),
+		},
+		ApplicationName: room.ApplicationName,
+		Version:         room.Version,
+	})
+
+	if server := serverManager.LoadServer(int(room.Server.ServerId)); server != nil {
+		if room := roomManager.LoadRoom(int(room.RoomId)); room != nil {
+			server.Load += int(room.ConnectedUser*room.ConnectedUser) - room.MaxUser*room.MaxUser
+		}
+	}
+}
+
+func unregisterRoom(room *pb.Room) {
+	if server := serverManager.LoadServer(int(room.Server.ServerId)); server != nil {
+		server.Load -= int(room.ConnectedUser * room.ConnectedUser)
+	}
+
+	roomManager.Delete(int(room.RoomId))
+}
+
+func registerServer(server *pb.Server) {
+	serverManager.Store(&Server{
+		Host:     server.Host,
+		Port:     int(server.Port),
+		ServerID: int(server.ServerId),
+	})
+}
+
+func unregisterServer(server *pb.Server) {
+	serverManager.Delete(int(server.ServerId))
 }

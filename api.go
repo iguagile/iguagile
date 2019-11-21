@@ -1,6 +1,8 @@
 package api
 
 import (
+	"log"
+	"os"
 	"sync"
 
 	"github.com/gomodule/redigo/redis"
@@ -53,16 +55,18 @@ var (
 
 var (
 	// Address is room api server address.
-	Address   = ":80"
+	Address = ":80"
 
 	// BaseUri is base uri of room api.
-	BaseUri   = "/api/v1"
+	BaseUri = "/api/v1"
 
 	// RedisHost is redis address.
 	RedisHost = ":6379"
 
 	// MaxUser is max value of room capacity.
-	MaxUser   = 70
+	MaxUser = 70
+
+	Logger = log.New(os.Stdout, "iguagile-api ", log.Lshortfile)
 )
 
 // Start starts an room api server.

@@ -3,11 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/golang/protobuf/proto"
 	"log"
 	"os"
 	"sync"
 
+	"github.com/golang/protobuf/proto"
 	"github.com/gomodule/redigo/redis"
 	pb "github.com/iguagile/iguagile-room-proto/room"
 	"github.com/labstack/echo"
@@ -59,119 +59,112 @@ func (m *ServerManager) Delete(serverID int) {
 	m.servers.Delete(serverID)
 }
 
-func (m *ServerManager) LoadServer(serverID int) *Server {
-	var server *Server
+func (m *ServerManager) LoadServer(serverID int) (server *Server) {
 	m.servers.Range(func(key, value interface{}) bool {
-		switch s := value.(type) {
-		case *Server:
-			if s.ServerID == serverID {
-				server = s
-			}
+		s, ok := value.(*Server)
+		if ok || s.ServerID == serverID {
+			server = s
+			return false
 		}
 		return true
 	})
 
-	return server
+	return
 }
 
-func (m *ServerManager) LowLoadServer() *Server {
-	var server *Server
+func (m *ServerManager) LowLoadServer() (server *Server) {
 	m.servers.Range(func(key, value interface{}) bool {
-		switch s := value.(type) {
-		case *Server:
-			if server == nil || server.Load > s.Load {
-				server = s
-			}
+		s, ok := value.(*Server)
+		if ok || server == nil || server.Load > s.Load {
+			server = s
 		}
 		return true
 	})
 
-	return server
+	return
 }
 
-func (m *ServerManager) LoadServers() []*Server {
-	var servers []*Server
+func (m *ServerManager) LoadServers() (servers []*Server) {
 	m.servers.Range(func(key, value interface{}) bool {
-		switch server := value.(type) {
-		case *Server:
+		server, ok := value.(*Server)
+		if ok {
 			servers = append(servers, server)
 		}
 		return true
 	})
 
-	return servers
+	return
 }
 
 type RoomManager struct {
 	rooms *sync.Map
 }
 
-func (m *RoomManager) LoadRooms(applicationName, version string) []*pb.Room {
-	rooms, ok := m.rooms.Load(applicationName + version)
+func (m *RoomManager) LoadRooms(applicationName, version string) (results []*pb.Room) {
+	roomMap, ok := m.rooms.Load(applicationName + version)
 	if !ok {
-		return []*pb.Room{}
+		return
 	}
 
-	switch v := rooms.(type) {
-	case *sync.Map:
-		var rooms []*pb.Room
-		v.Range(func(key, value interface{}) bool {
-			switch v := value.(type) {
-			case *pb.Room:
-				rooms = append(rooms, v)
-			}
-			return true
-		})
-		return rooms
-	default:
-		return []*pb.Room{}
+	rooms, ok := roomMap.(*sync.Map)
+	if !ok {
+		return
 	}
+
+	rooms.Range(func(key, value interface{}) bool {
+		room, ok := value.(*pb.Room)
+		if ok {
+			results = append(results, room)
+		}
+		return true
+	})
+
+	return
 }
 
 func (m *RoomManager) Store(room *Room) {
 	m.rooms.Store(room.RoomID, room)
 	key := room.ApplicationName + room.Version
-	rooms, ok := m.rooms.Load(key)
+	roomMap, ok := m.rooms.Load(key)
 	if !ok {
 		rooms := &sync.Map{}
 		rooms.Store(room.RoomID, room)
 		m.rooms.Store(key, rooms)
 	} else {
-		switch v := rooms.(type) {
-		case *sync.Map:
-			v.Store(room.RoomID, room)
+		rooms, ok := roomMap.(*sync.Map)
+		if ok {
+			rooms.Store(room.RoomID, room)
 		}
 	}
 }
 
-func (m *RoomManager) LoadRoom(roomID int) *Room {
-	var room *Room
+func (m *RoomManager) LoadRoom(roomID int) (room *Room) {
 	m.rooms.Range(func(key, value interface{}) bool {
-		switch rooms := value.(type) {
-		case *sync.Map:
-			r, ok := rooms.Load(roomID)
-			if !ok {
-				return true
-			}
-			switch v := r.(type) {
-			case *Room:
-				room = v
-			}
-			return false
+		rooms, ok := value.(*sync.Map)
+		if !ok {
+			return true
 		}
 
-		return true
+		r, ok := rooms.Load(roomID)
+		if !ok {
+			return true
+		}
+
+		room, ok = r.(*Room)
+		return !ok
 	})
 
-	return room
+	return
 }
 
 func (m *RoomManager) Delete(roomID int) {
 	m.rooms.Range(func(key, value interface{}) bool {
-		switch rooms := value.(type) {
-		case *sync.Map:
-			rooms.Delete(roomID)
+		rooms, ok := value.(*sync.Map)
+		if !ok {
+			return true
 		}
+
+		rooms.Delete(roomID)
 		return true
 	})
 }

@@ -9,7 +9,8 @@ message CreateRoomRequest {
     string version = 2;
     string password = 3;
     int32 max_user = 4;
-    bytes token = 5;
+    bytes room_token = 5;
+    bytes server_token = 6;
 }
 
 message CreateRoomResponse {

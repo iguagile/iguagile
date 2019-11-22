@@ -18,56 +18,56 @@ const (
 	unregisterRoomMessage
 )
 
-func subscribe(psc redis.PubSubConn) {
+func (s *RoomAPIServer) subscribe(psc redis.PubSubConn) {
 	for {
 		switch v := psc.Receive().(type) {
 		case redis.Message:
 			if len(v.Data) <= 1 {
-				Logger.Printf("invalid message %v\n", v)
+				s.Logger.Printf("invalid message %v\n", v)
 				break
 			}
 			switch v.Channel {
 			case channelRoom:
 				room := &pb.Room{}
 				if err := proto.Unmarshal(v.Data[1:], room); err != nil {
-					Logger.Println(err)
+					s.Logger.Println(err)
 					break
 				}
 				switch v.Data[0] {
 				case registerRoomMessage:
-					registerRoom(room)
+					s.registerRoom(room)
 				case unregisterRoomMessage:
-					unregisterRoom(room)
+					s.unregisterRoom(room)
 				default:
-					Logger.Printf("invalid message type %v\n", v)
+					s.Logger.Printf("invalid message type %v\n", v)
 				}
 			case channelServer:
 				server := &pb.Server{}
 				if err := proto.Unmarshal(v.Data[1:], server); err != nil {
-					Logger.Println(err)
+					s.Logger.Println(err)
 					break
 				}
 				switch v.Data[0] {
 				case registerServerMessage:
-					registerServer(server)
+					s.registerServer(server)
 				case unregisterServerMessage:
-					unregisterServer(server)
+					s.unregisterServer(server)
 				default:
-					Logger.Printf("invalid message type %v\n", v)
+					s.Logger.Printf("invalid message type %v\n", v)
 				}
 			default:
-				Logger.Printf("invalid channel%v\n", v)
+				s.Logger.Printf("invalid channel%v\n", v)
 			}
 		case redis.Subscription:
-			Logger.Printf("Subscribe %v %v %v\n", v.Channel, v.Kind, v.Count)
+			s.Logger.Printf("Subscribe %v %v %v\n", v.Channel, v.Kind, v.Count)
 		case error:
-			Logger.Println(v)
+			s.Logger.Println(v)
 		}
 	}
 }
 
-func registerRoom(room *pb.Room) {
-	roomManager.Store(&Room{
+func (s *RoomAPIServer) registerRoom(room *pb.Room) {
+	s.roomManager.Store(&Room{
 		RoomID:          int(room.RoomId),
 		RequirePassword: room.RequirePassword,
 		MaxUser:         int(room.MaxUser),
@@ -81,29 +81,29 @@ func registerRoom(room *pb.Room) {
 		Version:         room.Version,
 	})
 
-	if server := serverManager.LoadServer(int(room.Server.ServerId)); server != nil {
-		if room := roomManager.LoadRoom(int(room.RoomId)); room != nil {
-			server.Load += int(room.ConnectedUser*room.ConnectedUser) - room.MaxUser*room.MaxUser
+	if server := s.serverManager.LoadServer(int(room.Server.ServerId)); server != nil {
+		if r := s.roomManager.LoadRoom(int(room.RoomId)); room != nil {
+			server.Load += int(room.ConnectedUser*room.ConnectedUser) - r.MaxUser*r.MaxUser
 		}
 	}
 }
 
-func unregisterRoom(room *pb.Room) {
-	if server := serverManager.LoadServer(int(room.Server.ServerId)); server != nil {
+func (s *RoomAPIServer) unregisterRoom(room *pb.Room) {
+	if server := s.serverManager.LoadServer(int(room.Server.ServerId)); server != nil {
 		server.Load -= int(room.ConnectedUser * room.ConnectedUser)
 	}
 
-	roomManager.Delete(int(room.RoomId))
+	s.roomManager.Delete(int(room.RoomId))
 }
 
-func registerServer(server *pb.Server) {
-	serverManager.Store(&Server{
+func (s *RoomAPIServer) registerServer(server *pb.Server) {
+	s.serverManager.Store(&Server{
 		Host:     server.Host,
 		Port:     int(server.Port),
 		ServerID: int(server.ServerId),
 	})
 }
 
-func unregisterServer(server *pb.Server) {
-	serverManager.Delete(int(server.ServerId))
+func (s *RoomAPIServer) unregisterServer(server *pb.Server) {
+	s.serverManager.Delete(int(server.ServerId))
 }

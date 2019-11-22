@@ -18,17 +18,17 @@ var (
 	noServerErr = fmt.Errorf("server not exists")
 )
 
-func roomCreateHandler(c echo.Context) error {
+func (s *RoomAPIServer) roomCreateHandler(c echo.Context) error {
 	request := &CreateRoomRequest{}
 	if err := c.Bind(request); err != nil {
 		return err
 	}
 
-	if request.MaxUser > MaxUser {
+	if request.MaxUser > s.MaxUser {
 		return c.JSON(400, exceedResponse)
 	}
 
-	server := serverManager.LowLoadServer()
+	server := s.serverManager.LowLoadServer()
 	if server == nil {
 		return noServerErr
 	}
@@ -63,7 +63,7 @@ func roomCreateHandler(c echo.Context) error {
 		Version:         request.Version,
 	}
 
-	roomManager.Store(room)
+	s.roomManager.Store(room)
 
 	res := RoomAPIResponse{
 		Success: true,
@@ -72,11 +72,11 @@ func roomCreateHandler(c echo.Context) error {
 	return c.JSON(201, res)
 }
 
-func roomListHandler(c echo.Context) error {
+func (s *RoomAPIServer) roomListHandler(c echo.Context) error {
 	name := c.QueryParam("name")
 	version := c.QueryParam("version")
 
-	rooms := roomManager.Search(name, version)
+	rooms := s.roomManager.Search(name, version)
 	res := RoomAPIResponse{
 		Success: true,
 		Result:  rooms,

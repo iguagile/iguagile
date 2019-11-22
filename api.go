@@ -10,6 +10,39 @@ import (
 	"github.com/labstack/echo/middleware"
 )
 
+// RoomAPIServer is room api server.
+type RoomAPIServer struct {
+	// Address is room api server address.
+	Address string
+
+	// BaseUri is base uri of room api.
+	BaseUri string
+
+	// RedisHost is redis address.
+	RedisHost string
+
+	// MaxUser is max value of room capacity.
+	MaxUser int
+
+	Logger *log.Logger
+
+	serverManager *ServerManager
+	roomManager   *RoomManager
+}
+
+// NewRoomAPIServer is an instance of RoomAPIServer.
+func NewRoomAPIServer() *RoomAPIServer {
+	return &RoomAPIServer{
+		Address:       ":80",
+		BaseUri:       "/api/v1",
+		RedisHost:     ":6379",
+		MaxUser:       70,
+		Logger:        log.New(os.Stdout, "iguagile-room-api ", log.Lshortfile),
+		serverManager: &ServerManager{servers: &sync.Map{}},
+		roomManager:   &RoomManager{rooms: &sync.Map{}},
+	}
+}
+
 // Server is room server information.
 type Server struct {
 	Host     string `json:"server"`
@@ -48,30 +81,9 @@ type CreateRoomRequest struct {
 
 const iguagileAPIVersion = "v1"
 
-var (
-	serverManager = &ServerManager{servers: &sync.Map{}}
-	roomManager   = &RoomManager{rooms: &sync.Map{}}
-)
-
-var (
-	// Address is room api server address.
-	Address = ":80"
-
-	// BaseUri is base uri of room api.
-	BaseUri = "/api/v1"
-
-	// RedisHost is redis address.
-	RedisHost = ":6379"
-
-	// MaxUser is max value of room capacity.
-	MaxUser = 70
-
-	Logger = log.New(os.Stdout, "iguagile-api ", log.Lshortfile)
-)
-
 // Start starts an room api server.
-func Start() error {
-	redisConn, err := redis.Dial("tcp", RedisHost)
+func (s *RoomAPIServer) Start() error {
+	redisConn, err := redis.Dial("tcp", s.RedisHost)
 	if err != nil {
 		return err
 	}
@@ -81,14 +93,14 @@ func Start() error {
 		return err
 	}
 
-	go subscribe(psc)
+	go s.subscribe(psc)
 
 	e := echo.New()
 	e.Use(middleware.Recover())
 	e.Use(middleware.Logger())
-	g := e.Group(BaseUri)
-	g.Add(echo.POST, "/rooms", roomCreateHandler)
-	g.Add(echo.GET, "/rooms", roomListHandler)
+	g := e.Group(s.BaseUri)
+	g.Add(echo.POST, "/rooms", s.roomCreateHandler)
+	g.Add(echo.GET, "/rooms", s.roomListHandler)
 	g.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			c.Response().Header().Add("X-IGUAGILE-API", iguagileAPIVersion)
@@ -96,5 +108,5 @@ func Start() error {
 		}
 	})
 
-	return e.Start(Address)
+	return e.Start(s.Address)
 }

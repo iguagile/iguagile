@@ -16,7 +16,7 @@ var (
 		Error:   "MaxUser exceeds the maximum value",
 	}
 
-	noServerErr = fmt.Errorf("server not exists")
+	errNoServer = fmt.Errorf("server not exists")
 )
 
 func (s *RoomAPIServer) roomCreateHandler(c echo.Context) error {
@@ -31,7 +31,7 @@ func (s *RoomAPIServer) roomCreateHandler(c echo.Context) error {
 
 	server := s.serverManager.LowLoadServer()
 	if server == nil {
-		return noServerErr
+		return errNoServer
 	}
 
 	grpcHost := fmt.Sprintf("%v:%v", server.Host, server.APIPort)

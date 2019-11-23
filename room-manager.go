@@ -29,8 +29,8 @@ func (m *RoomManager) Store(room *Room) {
 	m.rooms.Store(key, rooms)
 }
 
-// LoadRoom returns the room.
-func (m *RoomManager) LoadRoom(roomID int) (room *Room) {
+// FindRoom returns the room.
+func (m *RoomManager) FindRoom(roomID int) (room *Room) {
 	m.rooms.Range(func(_, value interface{}) bool {
 		rooms, ok := value.(*sync.Map)
 		if !ok {

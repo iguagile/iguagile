@@ -36,8 +36,8 @@ func (m *ServerManager) LoadServer(serverID int) (server *Server) {
 	return
 }
 
-// LowLoadServer returns the server with the lowest load.
-func (m *ServerManager) LowLoadServer() (server *Server) {
+// PickupLowLoadServer returns the server with the lowest load.
+func (m *ServerManager) PickupLowLoadServer() (server *Server) {
 	m.servers.Range(func(_, value interface{}) bool {
 		s, ok := value.(*Server)
 		if ok || server == nil || server.Load > s.Load {

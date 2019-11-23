@@ -82,7 +82,7 @@ func (s *RoomAPIServer) registerRoom(room *pb.Room) {
 	})
 
 	if server := s.serverManager.LoadServer(int(room.Server.ServerId)); server != nil {
-		if r := s.roomManager.LoadRoom(int(room.RoomId)); room != nil {
+		if r := s.roomManager.FindRoom(int(room.RoomId)); room != nil {
 			server.Load += int(room.ConnectedUser*room.ConnectedUser) - r.MaxUser*r.MaxUser
 		}
 	}

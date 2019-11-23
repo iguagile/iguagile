@@ -29,7 +29,7 @@ func (s *RoomAPIServer) roomCreateHandler(c echo.Context) error {
 		return c.JSON(400, exceedResponse)
 	}
 
-	server := s.serverManager.LowLoadServer()
+	server := s.serverManager.PickupLowLoadServer()
 	if server == nil {
 		return errNoServer
 	}

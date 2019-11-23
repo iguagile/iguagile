@@ -115,8 +115,8 @@ func (s *RoomAPIServer) Start() error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	go s.serverManager.StartRemoveDeadServer(ctx, s.ServerDeadLine)
-	go s.roomManager.StartRemoveDeadRoom(ctx, s.RoomDeadLine)
+	go s.serverManager.DeleteUnhealthServerAtPeriodic(ctx, s.ServerDeadLine)
+	go s.roomManager.DeleteDeadRoomAtPeriodic(ctx, s.RoomDeadLine)
 
 	e := echo.New()
 	e.Use(middleware.Recover())

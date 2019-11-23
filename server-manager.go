@@ -62,6 +62,7 @@ func (m *ServerManager) LoadServers() (servers []*Server) {
 	return
 }
 
+// StartRemoveDeadServer removes dead servers at regular intervals
 func (m *ServerManager) StartRemoveDeadServer(ctx context.Context, duration time.Duration) {
 	ticker := time.NewTicker(duration)
 	for {

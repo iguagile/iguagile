@@ -76,6 +76,7 @@ func (m *RoomManager) Search(name, version string) []*Room {
 	return rooms
 }
 
+// StartRemoveDeadRoom removes dead rooms at regular intervals
 func (m *RoomManager) StartRemoveDeadRoom(ctx context.Context, duration time.Duration) {
 	ticker := time.NewTicker(duration)
 	for {

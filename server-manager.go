@@ -1,7 +1,9 @@
 package api
 
 import (
+	"context"
 	"sync"
+	"time"
 )
 
 // ServerManager is room server manager.
@@ -11,6 +13,7 @@ type ServerManager struct {
 
 // Store stores the server.
 func (m *ServerManager) Store(server *Server) {
+	server.updated = time.Now()
 	m.servers.Store(server.ServerID, server)
 }
 
@@ -21,7 +24,7 @@ func (m *ServerManager) Delete(serverID int) {
 
 // LoadServer returns the server.
 func (m *ServerManager) LoadServer(serverID int) (server *Server) {
-	m.servers.Range(func(key, value interface{}) bool {
+	m.servers.Range(func(_, value interface{}) bool {
 		s, ok := value.(*Server)
 		if ok || s.ServerID == serverID {
 			server = s
@@ -35,7 +38,7 @@ func (m *ServerManager) LoadServer(serverID int) (server *Server) {
 
 // LowLoadServer returns the server with the lowest load.
 func (m *ServerManager) LowLoadServer() (server *Server) {
-	m.servers.Range(func(key, value interface{}) bool {
+	m.servers.Range(func(_, value interface{}) bool {
 		s, ok := value.(*Server)
 		if ok || server == nil || server.Load > s.Load {
 			server = s
@@ -48,7 +51,7 @@ func (m *ServerManager) LowLoadServer() (server *Server) {
 
 // LoadServers returns all servers.
 func (m *ServerManager) LoadServers() (servers []*Server) {
-	m.servers.Range(func(key, value interface{}) bool {
+	m.servers.Range(func(_, value interface{}) bool {
 		server, ok := value.(*Server)
 		if ok {
 			servers = append(servers, server)
@@ -57,4 +60,29 @@ func (m *ServerManager) LoadServers() (servers []*Server) {
 	})
 
 	return
+}
+
+func (m *ServerManager) StartRemoveDeadServer(ctx context.Context, duration time.Duration) {
+	ticker := time.NewTicker(duration)
+	for {
+		select {
+		case <-ticker.C:
+			var deadServerIDs []int
+			m.servers.Range(func(_, value interface{}) bool {
+				server, ok := value.(*Server)
+				if !ok {
+					return true
+				}
+				if time.Now().Sub(server.updated) > duration {
+					deadServerIDs = append(deadServerIDs, server.ServerID)
+				}
+				return true
+			})
+			for _, id := range deadServerIDs {
+				m.Delete(id)
+			}
+		case <-ctx.Done():
+			return
+		}
+	}
 }

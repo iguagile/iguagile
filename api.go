@@ -1,9 +1,11 @@
 package api
 
 import (
+	"context"
 	"log"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/gomodule/redigo/redis"
 	"github.com/labstack/echo"
@@ -24,7 +26,9 @@ type RoomAPIServer struct {
 	// MaxUser is max value of room capacity.
 	MaxUser int
 
-	Logger *log.Logger
+	ServerDeadLine time.Duration
+	RoomDeadLine   time.Duration
+	Logger         *log.Logger
 
 	serverManager *ServerManager
 	roomManager   *RoomManager
@@ -33,13 +37,15 @@ type RoomAPIServer struct {
 // NewRoomAPIServer is an instance of RoomAPIServer.
 func NewRoomAPIServer() *RoomAPIServer {
 	return &RoomAPIServer{
-		Address:       ":80",
-		BaseUri:       "/api/v1",
-		RedisHost:     ":6379",
-		MaxUser:       70,
-		Logger:        log.New(os.Stdout, "iguagile-room-api ", log.Lshortfile),
-		serverManager: &ServerManager{servers: &sync.Map{}},
-		roomManager:   &RoomManager{rooms: &sync.Map{}},
+		Address:        ":80",
+		BaseUri:        "/api/v1",
+		RedisHost:      ":6379",
+		MaxUser:        70,
+		ServerDeadLine: time.Minute * 5,
+		RoomDeadLine:   time.Minute * 5,
+		Logger:         log.New(os.Stdout, "iguagile-room-api ", log.Lshortfile),
+		serverManager:  &ServerManager{servers: &sync.Map{}},
+		roomManager:    &RoomManager{rooms: &sync.Map{}},
 	}
 }
 
@@ -51,6 +57,7 @@ type Server struct {
 	Load     int
 	APIPort  int
 	Token    []byte
+	updated  time.Time
 }
 
 // Room is room information.
@@ -62,6 +69,7 @@ type Room struct {
 	Server          Server `json:"server"`
 	ApplicationName string
 	Version         string
+	updated         time.Time
 }
 
 // RoomAPIResponse is api response.
@@ -94,6 +102,12 @@ func (s *RoomAPIServer) Start() error {
 	}
 
 	go s.subscribe(psc)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	s.serverManager.StartRemoveDeadServer(ctx, s.ServerDeadLine)
+	s.roomManager.StartRemoveDeadRoom(ctx, s.RoomDeadLine)
 
 	e := echo.New()
 	e.Use(middleware.Recover())

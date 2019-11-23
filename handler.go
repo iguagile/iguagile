@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/google/uuid"
 	pb "github.com/iguagile/iguagile-room-proto/room"
 	"github.com/labstack/echo"
 	"google.golang.org/grpc"
@@ -39,12 +40,16 @@ func (s *RoomAPIServer) roomCreateHandler(c echo.Context) error {
 		return err
 	}
 	defer func() { _ = grpcConn.Close() }()
+
+	roomToken := uuid.New()
 	grpcClient := pb.NewRoomServiceClient(grpcConn)
 	grpcRequest := &pb.CreateRoomRequest{
 		ApplicationName: request.ApplicationName,
 		Version:         request.Version,
 		Password:        request.Password,
 		MaxUser:         int32(request.MaxUser),
+		ServerToken:     server.Token,
+		RoomToken:       roomToken[:],
 	}
 	grpcResponse, err := grpcClient.CreateRoom(context.Background(), grpcRequest)
 	if err != nil {

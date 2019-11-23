@@ -34,15 +34,24 @@ type RoomAPIServer struct {
 	roomManager   *RoomManager
 }
 
+const (
+	defaultAddress        = ":80"
+	defaultBaseUri        = "/api/v1"
+	defaultRedisHost      = ":6379"
+	defaultMaxUser        = 70
+	defaultServerDeadline = time.Minute * 5
+	defaultRoomDeadline   = time.Minute * 5
+)
+
 // NewRoomAPIServer is an instance of RoomAPIServer.
 func NewRoomAPIServer() *RoomAPIServer {
 	return &RoomAPIServer{
-		Address:        ":80",
-		BaseUri:        "/api/v1",
-		RedisHost:      ":6379",
-		MaxUser:        70,
-		ServerDeadLine: time.Minute * 5,
-		RoomDeadLine:   time.Minute * 5,
+		Address:        defaultAddress,
+		BaseUri:        defaultBaseUri,
+		RedisHost:      defaultRedisHost,
+		MaxUser:        defaultMaxUser,
+		ServerDeadLine: defaultServerDeadline,
+		RoomDeadLine:   defaultRoomDeadline,
 		Logger:         log.New(os.Stdout, "iguagile-room-api ", log.Lshortfile),
 		serverManager:  &ServerManager{servers: &sync.Map{}},
 		roomManager:    &RoomManager{rooms: &sync.Map{}},

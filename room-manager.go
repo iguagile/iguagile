@@ -63,17 +63,29 @@ func (m *RoomManager) Delete(roomID int) {
 }
 
 // Search returns returns all rooms with matching application name and version.
-func (m *RoomManager) Search(name, version string) []*Room {
-	rooms := make([]*Room, 0)
-	m.rooms.Range(func(_, value interface{}) bool {
-		room := value.(*Room)
+func (m *RoomManager) Search(name, version string) (rooms []*Room) {
+	v, ok := m.rooms.Load(name + version)
+	if !ok {
+		return
+	}
+
+	r, ok := v.(*sync.Map)
+	if !ok {
+		return
+	}
+
+	r.Range(func(_, value interface{}) bool {
+		room, ok := value.(*Room)
+		if !ok {
+			return true
+		}
 		if room.ApplicationName == name && room.Version == version {
 			rooms = append(rooms, room)
 		}
 		return true
 	})
 
-	return rooms
+	return
 }
 
 // DeleteDeadRoomAtPeriodic removes dead rooms at regular intervals

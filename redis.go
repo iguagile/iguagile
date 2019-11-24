@@ -101,6 +101,8 @@ func (s *RoomAPIServer) registerServer(server *pb.Server) {
 		Host:     server.Host,
 		Port:     int(server.Port),
 		ServerID: int(server.ServerId),
+		APIPort:  int(server.ApiPort),
+		Token:    server.Token,
 	})
 }
 

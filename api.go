@@ -60,25 +60,25 @@ func NewRoomAPIServer() *RoomAPIServer {
 
 // Server is room server information.
 type Server struct {
-	Host     string `json:"server"`
-	Port     int    `json:"port"`
-	ServerID int
-	Load     int
-	APIPort  int
-	Token    []byte
-	updated  time.Time
+	Host     string    `json:"server"`
+	Port     int       `json:"port"`
+	ServerID int       `json:"-"`
+	Load     int       `json:"-"`
+	APIPort  int       `json:"-"`
+	Token    []byte    `json:"-"`
+	updated  time.Time `json:"-"`
 }
 
 // Room is room information.
 type Room struct {
-	RoomID          int    `json:"room_id"`
-	RequirePassword bool   `json:"require_password"`
-	MaxUser         int    `json:"max_user"`
-	ConnectedUser   int    `json:"connected_user"`
-	Server          Server `json:"server"`
-	ApplicationName string
-	Version         string
-	updated         time.Time
+	RoomID          int       `json:"room_id"`
+	RequirePassword bool      `json:"require_password"`
+	MaxUser         int       `json:"max_user"`
+	ConnectedUser   int       `json:"connected_user"`
+	Server          Server    `json:"server"`
+	ApplicationName string    `json:"-"`
+	Version         string    `json:"-"`
+	updated         time.Time `json:"-"`
 }
 
 // RoomAPIResponse is api response.

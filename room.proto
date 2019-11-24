@@ -32,4 +32,5 @@ message Server {
     int32 port = 2;
     int32 server_id = 3;
     bytes token = 4;
+    int32 api_port = 5;
 }

@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -66,6 +67,7 @@ func (s *RoomAPIServer) roomCreateHandler(c echo.Context) error {
 		},
 		ApplicationName: request.ApplicationName,
 		Version:         request.Version,
+		Token:           base64.StdEncoding.EncodeToString(roomToken[:]),
 	}
 
 	s.roomManager.Store(room)

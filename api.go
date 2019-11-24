@@ -76,6 +76,7 @@ type Room struct {
 	MaxUser         int       `json:"max_user"`
 	ConnectedUser   int       `json:"connected_user"`
 	Server          Server    `json:"server"`
+	Token           string    `json:"token"`
 	ApplicationName string    `json:"-"`
 	Version         string    `json:"-"`
 	updated         time.Time `json:"-"`

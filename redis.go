@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"github.com/golang/protobuf/proto"
 	"github.com/gomodule/redigo/redis"
 	pb "github.com/iguagile/iguagile-room-proto/room"
@@ -18,8 +19,14 @@ const (
 	unregisterRoomMessage
 )
 
-func (s *RoomAPIServer) subscribe(psc redis.PubSubConn) {
+func (s *RoomAPIServer) subscribe(ctx context.Context, psc redis.PubSubConn) error {
 	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		default:
+		}
+
 		switch v := psc.Receive().(type) {
 		case redis.Message:
 			if len(v.Data) <= 1 {
@@ -61,7 +68,7 @@ func (s *RoomAPIServer) subscribe(psc redis.PubSubConn) {
 		case redis.Subscription:
 			s.Logger.Printf("Subscribe %v %v %v\n", v.Channel, v.Kind, v.Count)
 		case error:
-			s.Logger.Println(v)
+			return v
 		}
 	}
 }

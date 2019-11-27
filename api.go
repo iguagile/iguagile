@@ -111,10 +111,38 @@ func (s *RoomAPIServer) Start() error {
 		return err
 	}
 
-	go s.subscribe(psc)
-
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
+	go func(ctx context.Context, psc redis.PubSubConn) {
+		if err := s.subscribe(ctx, psc); err != nil {
+			s.Logger.Println(err)
+		}
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+			}
+
+			redisConn, err := redis.Dial("tcp", s.RedisHost)
+			if err != nil {
+				s.Logger.Println(err)
+				break
+			}
+
+			psc = redis.PubSubConn{Conn: redisConn}
+			if err := psc.Subscribe(channelServer, channelRoom); err != nil {
+				s.Logger.Println(err)
+				break
+			}
+
+			if err := s.subscribe(ctx, psc); err != nil {
+				s.Logger.Println(err)
+			}
+		}
+	}(ctx, psc)
 
 	go s.serverManager.DeleteUnhealthServerAtPeriodic(ctx, s.ServerDeadLine)
 	go s.roomManager.DeleteDeadRoomAtPeriodic(ctx, s.RoomDeadLine)

@@ -70,12 +70,16 @@ func (s *RoomAPIServer) roomCreateHandler(c echo.Context) error {
 		Token:           base64.StdEncoding.EncodeToString(roomToken[:]),
 	}
 
-	s.roomManager.Store(room)
-
 	res := RoomAPIResponse{
 		Success: true,
 		Result:  room,
 	}
+
+	defer func() {
+		room.Token = ""
+		s.roomManager.Store(room)
+	}()
+
 	return c.JSON(201, res)
 }
 

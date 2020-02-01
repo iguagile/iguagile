@@ -25,6 +25,7 @@ message Room {
     Server server = 5;
     string application_name = 6;
     string version = 7;
+    map<string, string> information = 8;
 }
 
 message Server {

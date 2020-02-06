@@ -11,6 +11,7 @@ message CreateRoomRequest {
     int32 max_user = 4;
     bytes room_token = 5;
     bytes server_token = 6;
+    map<string, string> information = 7;
 }
 
 message CreateRoomResponse {

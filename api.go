@@ -71,15 +71,16 @@ type Server struct {
 
 // Room is room information.
 type Room struct {
-	RoomID          int       `json:"room_id"`
-	RequirePassword bool      `json:"require_password"`
-	MaxUser         int       `json:"max_user"`
-	ConnectedUser   int       `json:"connected_user"`
-	Server          Server    `json:"server"`
-	Token           string    `json:"token"`
-	ApplicationName string    `json:"-"`
-	Version         string    `json:"-"`
-	updated         time.Time `json:"-"`
+	RoomID          int               `json:"room_id"`
+	RequirePassword bool              `json:"require_password"`
+	MaxUser         int               `json:"max_user"`
+	ConnectedUser   int               `json:"connected_user"`
+	Server          Server            `json:"server"`
+	Token           string            `json:"token"`
+	Information     map[string]string `json:"information"`
+	ApplicationName string            `json:"-"`
+	Version         string            `json:"-"`
+	updated         time.Time         `json:"-"`
 }
 
 // RoomAPIResponse is api response.
@@ -91,10 +92,11 @@ type RoomAPIResponse struct {
 
 // CreateRoomRequest is api request.
 type CreateRoomRequest struct {
-	ApplicationName string `json:"application_name"`
-	Version         string `json:"version"`
-	Password        string `json:"password"`
-	MaxUser         int    `json:"max_user"`
+	ApplicationName string            `json:"application_name"`
+	Version         string            `json:"version"`
+	Password        string            `json:"password"`
+	MaxUser         int               `json:"max_user"`
+	Information     map[string]string `json:"information"`
 }
 
 const iguagileAPIVersion = "v1"

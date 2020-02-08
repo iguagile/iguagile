@@ -51,6 +51,7 @@ func (s *RoomAPIServer) roomCreateHandler(c echo.Context) error {
 		MaxUser:         int32(request.MaxUser),
 		ServerToken:     server.Token,
 		RoomToken:       roomToken[:],
+		Information:     request.Information,
 	}
 	grpcResponse, err := grpcClient.CreateRoom(context.Background(), grpcRequest)
 	if err != nil {
@@ -68,6 +69,7 @@ func (s *RoomAPIServer) roomCreateHandler(c echo.Context) error {
 		ApplicationName: request.ApplicationName,
 		Version:         request.Version,
 		Token:           base64.StdEncoding.EncodeToString(roomToken[:]),
+		Information:     request.Information,
 	}
 
 	res := RoomAPIResponse{

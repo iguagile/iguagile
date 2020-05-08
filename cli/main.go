@@ -9,7 +9,7 @@ import (
 
 func main() {
 	apiServer := api.NewRoomAPIServer()
-	apiServer.Address = ":80"
+	apiServer.Address = "0.0.0.0:80"
 	apiServer.BaseUri = "/api/v1"
 	apiServer.RedisHost = os.Getenv("REDIS_HOST")
 	apiServer.MaxUser = 70

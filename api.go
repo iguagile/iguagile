@@ -35,7 +35,7 @@ type RoomAPIServer struct {
 }
 
 const (
-	defaultAddress        = ":80"
+	defaultAddress        = "0.0.0.0:80"
 	defaultBaseUri        = "/api/v1"
 	defaultRedisHost      = ":6379"
 	defaultMaxUser        = 70

@@ -7,7 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	pb "github.com/iguagile/iguagile-room-proto/room"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"google.golang.org/grpc"
 )
 

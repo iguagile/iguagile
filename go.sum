@@ -59,6 +59,8 @@ github.com/google/uuid v1.3.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+
 github.com/grpc-ecosystem/grpc-gateway v1.16.0/go.mod h1:BDjrQk3hbvj6Nolgz8mAMFbcEtjT1g+wF4CSlocrBnw=
 github.com/iguagile/iguagile-room-proto v0.0.0-20200206152432-0db3646938b5 h1:ZDLYsiN5v5FRYSicg/8o5pcBsH15QSVeZYlok3Xq2hE=
 github.com/iguagile/iguagile-room-proto v0.0.0-20200206152432-0db3646938b5/go.mod h1:OSONB1793/tIvmylHZrK3pFQ+644q020hNH3ZA61+Mc=
+github.com/iguagile/iguagile-room-proto v0.0.0-20220930071210-943254feed57 h1:XC64JuJVdM9iqnqfFMQw0IX04GQ+3yjDR51X+qVzXOA=
+github.com/iguagile/iguagile-room-proto v0.0.0-20220930071210-943254feed57/go.mod h1:InhtDEA+J3y3Du7AFzJZWGYdzUi6BLGQe8LduL+v0XM=
 github.com/labstack/echo/v4 v4.5.0 h1:JXk6H5PAw9I3GwizqUHhYyS4f45iyGebR/c1xNCeOCY=
 github.com/labstack/echo/v4 v4.5.0/go.mod h1:czIriw4a0C1dFun+ObrXp7ok03xON0N1awStJ6ArI7Y=
 github.com/labstack/echo/v4 v4.9.0 h1:wPOF1CE6gvt/kmbMR4dGzWvHMPT+sAEUJOwOTtvITVY=

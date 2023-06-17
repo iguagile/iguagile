@@ -6,7 +6,7 @@ require (
 	github.com/golang/protobuf v1.5.3
 	github.com/gomodule/redigo v2.0.0+incompatible
 	github.com/google/uuid v1.3.0
-	github.com/iguagile/iguagile-room-proto v0.0.0-20230505035409-c32f3c4359f9
+	github.com/iguagile/iguagile-room-proto v0.0.0-20230616025152-a8cf077e2077
 	github.com/labstack/echo/v4 v4.10.2
 	google.golang.org/grpc v1.56.0
 )

@@ -8,7 +8,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/iguagile/iguagile-room-proto v0.0.0-20230616025152-a8cf077e2077
 	github.com/labstack/echo/v4 v4.10.2
-	google.golang.org/grpc v1.56.0
+	google.golang.org/grpc v1.56.1
 )
 
 require (

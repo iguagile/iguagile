@@ -28,6 +28,8 @@ github.com/iguagile/iguagile-room-proto v0.0.0-20230616025152-a8cf077e2077 h1:1H
 github.com/iguagile/iguagile-room-proto v0.0.0-20230616025152-a8cf077e2077/go.mod h1:tierJfd16rWlMWCNT51DctJJNjqKQ9tz7IWRUpHSmzE=
 github.com/iguagile/iguagile-room-proto v0.0.0-20230622035817-c6a324325a06 h1:Yhl4+KVjQsTTwPVUwYqqrDizEeOEVVW3xRqB0ZkmbHY=
 github.com/iguagile/iguagile-room-proto v0.0.0-20230622035817-c6a324325a06/go.mod h1:LZFMietn7XTkDTqBBbRaX/FyQ5cOGSnU5RTq6jzUxD8=
+github.com/iguagile/iguagile-room-proto v0.0.0-20230709141737-b58cae5f0141 h1:zHIIb2DzUu2J6vVCzLQCpKRln8Syg0nKLWrxs29y8q0=
+github.com/iguagile/iguagile-room-proto v0.0.0-20230709141737-b58cae5f0141/go.mod h1:v7WltIb/HJOwsI1jrp+nHjv7vzE8DmrdX/QoTpcyPuc=
 github.com/labstack/echo/v4 v4.10.0 h1:5CiyngihEO4HXsz3vVsJn7f8xAlWwRr3aY6Ih280ZKA=
 github.com/labstack/echo/v4 v4.10.0/go.mod h1:S/T/5fy/GigaXnHTkh0ZGe4LpkkQysvRjFMSUTkDRNQ=
 github.com/labstack/echo/v4 v4.10.1 h1:rB+D8In9PWjsp1OpHaqK+t04nQv/SBD1IoIcXCg0lpY=

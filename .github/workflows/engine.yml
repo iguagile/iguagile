@@ -1,8 +1,8 @@
-name: Docker Image CI
+name: Docker Image Build Engine
 
 on:
   push:
-    branches: [master]
+    branches: [main]
 
 jobs:
   build:
@@ -27,7 +27,7 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v4
         with:
-          context: .
+          context: engine
           platforms: linux/amd64,linux/arm/v7,linux/arm64
           push: true
-          tags: ghcr.io/${{ github.REPOSITORY }}:latest
+          tags: ghcr.io/${{ github.REPOSITORY }}:engine-latest

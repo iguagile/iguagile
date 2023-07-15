@@ -9,8 +9,8 @@ This project is experimental and not ready for production
 ## Quick Start
 
 ```bash
-git clone git@github.com:iguagile/iguagile-engine.git
-cd iguagile-engine
+git clone git@github.com:iguagile/iguagile.git
+cd iguagile
 docker-compose up
 curl http://localhost:8080/api/v1/rooms -X POST -d '{"application_name": "example", "version": "0.1.0", "password": "IiHqswslP2Yr3b3P", "max_user": 4, "information": {}}'
 # response

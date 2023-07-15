@@ -1,17 +1,11 @@
 FROM golang:alpine AS build
 ENV GO111MODULE=on
-ENV GOOS=linux
-ENV CGO_ENABLED=0
 
-
-WORKDIR $GOPATH/src/iguagile/iguagile-api
+WORKDIR $GOPATH/src/app/
 
 COPY . .
 
-
-RUN go build -a -o out cli/main.go && \
-  cp out /app
-
+RUN go build -a -o /app api/cli/main.go
 FROM alpine
 RUN apk add --no-cache tzdata ca-certificates
 COPY --from=build /app /app

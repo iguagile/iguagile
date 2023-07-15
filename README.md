@@ -1,6 +1,4 @@
-[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Figuagile%2Figuagile-engine.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Figuagile%2Figuagile-engine?ref=badge_shield)
-
-# iguagile-engine
+# iguagile
 
 Network synchronization of objects in 3d space with many people and low latency.
 

@@ -8,7 +8,7 @@ require (
 	github.com/google/uuid v1.3.1
 	github.com/iguagile/iguagile-api v0.0.1-beta
 	github.com/iguagile/iguagile-engine v0.0.0-20230715105316-c6caa78aa12b
-	github.com/iguagile/iguagile-room-proto v0.0.0-20230728014912-e8b8f7d07404
+	github.com/iguagile/iguagile-room-proto v0.0.0-20230916081431-87f53c560f2f
 	github.com/labstack/echo/v4 v4.11.1
 	github.com/minami14/idgo v1.1.1
 	google.golang.org/grpc v1.58.1

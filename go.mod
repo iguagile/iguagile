@@ -11,7 +11,7 @@ require (
 	github.com/iguagile/iguagile-room-proto v0.0.0-20230916081431-87f53c560f2f
 	github.com/labstack/echo/v4 v4.11.1
 	github.com/minami14/idgo v1.1.1
-	google.golang.org/grpc v1.58.1
+	google.golang.org/grpc v1.58.2
 )
 
 require (

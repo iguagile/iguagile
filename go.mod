@@ -9,7 +9,7 @@ require (
 	github.com/iguagile/iguagile-api v0.0.1-beta
 	github.com/iguagile/iguagile-engine v0.0.0-20230715105316-c6caa78aa12b
 	github.com/iguagile/iguagile-room-proto v0.0.0-20230923120802-8935249fc2fb
-	github.com/labstack/echo/v4 v4.11.1
+	github.com/labstack/echo/v4 v4.11.2
 	github.com/minami14/idgo v1.1.1
 	google.golang.org/grpc v1.58.2
 )
@@ -24,10 +24,10 @@ require (
 	github.com/minami14/go-bitarray v1.1.2 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
-	golang.org/x/crypto v0.11.0 // indirect
-	golang.org/x/net v0.12.0 // indirect
-	golang.org/x/sys v0.10.0 // indirect
-	golang.org/x/text v0.11.0 // indirect
+	golang.org/x/crypto v0.14.0 // indirect
+	golang.org/x/net v0.17.0 // indirect
+	golang.org/x/sys v0.13.0 // indirect
+	golang.org/x/text v0.13.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	google.golang.org/genproto v0.0.0-20230711160842-782d3b101e98 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230711160842-782d3b101e98 // indirect

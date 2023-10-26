@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/golang/protobuf v1.5.3
 	github.com/gomodule/redigo v2.0.0+incompatible
-	github.com/google/uuid v1.3.1
+	github.com/google/uuid v1.4.0
 	github.com/iguagile/iguagile-api v0.0.1-beta
 	github.com/iguagile/iguagile-engine v0.0.0-20230715105316-c6caa78aa12b
 	github.com/iguagile/iguagile-room-proto v0.0.0-20231024021549-80c990220979

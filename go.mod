@@ -3,12 +3,12 @@ module github.com/iguagile/iguagile
 go 1.20
 
 require (
-	github.com/golang/protobuf v1.5.3
+	github.com/golang/protobuf v1.5.4
 	github.com/gomodule/redigo v2.0.0+incompatible
 	github.com/google/uuid v1.6.0
 	github.com/iguagile/iguagile-api v0.0.1-beta
 	github.com/iguagile/iguagile-engine v0.0.0-20230715105316-c6caa78aa12b
-	github.com/iguagile/iguagile-room-proto v0.0.0-20240306025240-6c2bf3268f43
+	github.com/iguagile/iguagile-room-proto v0.0.0-20240307065626-04408893f8b0
 	github.com/labstack/echo/v4 v4.11.4
 	github.com/minami14/idgo v1.1.1
 	google.golang.org/grpc v1.62.1
@@ -31,5 +31,5 @@ require (
 	golang.org/x/time v0.5.0 // indirect
 	google.golang.org/genproto v0.0.0-20240123012728-ef4313101c80 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240123012728-ef4313101c80 // indirect
-	google.golang.org/protobuf v1.32.0 // indirect
+	google.golang.org/protobuf v1.33.0 // indirect
 )

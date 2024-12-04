@@ -11,7 +11,7 @@ require (
 	github.com/iguagile/iguagile-api v0.0.1-beta
 	github.com/iguagile/iguagile-engine v0.0.0-20230715105316-c6caa78aa12b
 	github.com/iguagile/iguagile-room-proto v0.0.0-20240707152440-9694856ddcba
-	github.com/labstack/echo/v4 v4.12.0
+	github.com/labstack/echo/v4 v4.13.0
 	github.com/minami14/idgo v1.1.1
 	google.golang.org/grpc v1.67.1
 )

@@ -62,6 +62,8 @@ github.com/iguagile/iguagile-room-proto v0.0.0-20240426135234-fae468892cb1 h1:kB
 github.com/iguagile/iguagile-room-proto v0.0.0-20240426135234-fae468892cb1/go.mod h1:06sHRmvfXyu0UkHBgnPpeNTx9x7AcMSTgreSJ4eWg6w=
 github.com/iguagile/iguagile-room-proto v0.0.0-20240707152440-9694856ddcba h1:3e4/o7qjMSrQzyNc8dbdMhk4+wtDiD6R69X7Ka1WCMQ=
 github.com/iguagile/iguagile-room-proto v0.0.0-20240707152440-9694856ddcba/go.mod h1:FAF5bhuTKJHM+9hShTvT9HFvKEpKfUDmgf0G/mszXlI=
+github.com/iguagile/iguagile-room-proto v0.0.0-20250209033335-4c18a7590641 h1:xdstc5MrY6ohpwlWrEoso3JSbB3nZ375TwhvVnB6eHM=
+github.com/iguagile/iguagile-room-proto v0.0.0-20250209033335-4c18a7590641/go.mod h1:WH0mz1L3C4u+oNurp1zXdf9Q9Wom9ptIlQEivdlKXUI=
 github.com/jessevdk/go-flags v1.4.0/go.mod h1:4FA24M0QyGHXBuZZK/XkWh8h0e1EYbRYJSGM75WSRxI=
 github.com/labstack/echo v3.3.10+incompatible h1:pGRcYk231ExFAyoAjAfD85kQzRJCRI8bbnE7CX5OEgg=
 github.com/labstack/echo v3.3.10+incompatible/go.mod h1:0INS7j/VjnFxD4E2wkz67b8cVwCLbBmJyDaka6Cmk1s=

@@ -5,7 +5,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: golang:1.23
+      - image: golang:1.24
         environment:
           GO111MODULE: "on"
           REDIS_HOST: "localhost:6379"

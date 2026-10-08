@@ -2,7 +2,7 @@ module github.com/iguagile/iguagile
 
 go 1.22
 
-toolchain go1.23.6
+toolchain go1.27.2
 
 require (
 	github.com/golang/protobuf v1.5.4
